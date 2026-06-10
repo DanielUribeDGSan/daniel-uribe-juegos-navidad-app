@@ -85,3 +85,47 @@ CREATE POLICY "Allow all operations for mimica_game_state" ON mimica_game_state 
 ALTER PUBLICATION supabase_realtime ADD TABLE mimica_sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE mimica_players;
 ALTER PUBLICATION supabase_realtime ADD TABLE mimica_game_state;
+
+-- 11. Create Dibujo Game Sessions Table
+CREATE TABLE dibujo_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  status TEXT NOT NULL DEFAULT 'waiting', -- 'waiting', 'prep', 'playing', 'round_end', 'finished'
+  current_round INTEGER NOT NULL DEFAULT 1,
+  active_team INTEGER, -- 1, 2, 3, or 4
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Create Dibujo Game Players Table
+CREATE TABLE dibujo_players (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID REFERENCES dibujo_sessions(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  team_id INTEGER NOT NULL, -- 1, 2, 3, or 4
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Create Dibujo Game State Table
+CREATE TABLE dibujo_game_state (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID REFERENCES dibujo_sessions(id) ON DELETE CASCADE,
+  active_drawer_id UUID REFERENCES dibujo_players(id),
+  current_word_index INTEGER NOT NULL DEFAULT 0,
+  current_word TEXT,
+  time_elapsed_seconds INTEGER NOT NULL DEFAULT 0,
+  words_completed INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. Enable Row Level Security for Dibujo
+ALTER TABLE dibujo_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dibujo_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dibujo_game_state ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow all operations for dibujo_sessions" ON dibujo_sessions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for dibujo_players" ON dibujo_players FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for dibujo_game_state" ON dibujo_game_state FOR ALL USING (true) WITH CHECK (true);
+
+-- 15. Enable Realtime for Dibujo
+ALTER PUBLICATION supabase_realtime ADD TABLE dibujo_sessions;
+ALTER PUBLICATION supabase_realtime ADD TABLE dibujo_players;
+ALTER PUBLICATION supabase_realtime ADD TABLE dibujo_game_state;

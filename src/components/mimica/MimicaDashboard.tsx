@@ -22,7 +22,11 @@ export default function MimicaDashboard() {
   const [gameState, setGameState] = useState<any>(null);
   const [words, setWords] = useState<string[]>([]);
   const [prepTimeLeft, setPrepTimeLeft] = useState(60);
+  const [prepTimeLeft, setPrepTimeLeft] = useState(60);
   const [teamTimes, setTeamTimes] = useState<{ [round: number]: { [team: number]: number } }>({});
+
+  const playersRef = useRef<any[]>([]);
+  useEffect(() => { playersRef.current = players; }, [players]);
 
   const domain = "https://daniel-uribe-jeugos-navidad-2026.netlify.app/mimica";
 
@@ -78,12 +82,12 @@ export default function MimicaDashboard() {
         await finishTeamTurn(newTime);
      } else {
         // Select next mimer and next validator
-        const currentTeamPlayers = players.filter(p => p.team_id === session.active_team);
+        const currentTeamPlayers = playersRef.current.filter(p => p.team_id === session.active_team).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         const nextMimerIdx = currentTeamPlayers.findIndex(p => p.id === currentState.active_mimer_id) + 1;
-        const nextMimerId = currentTeamPlayers[nextMimerIdx % currentTeamPlayers.length].id;
+        const nextMimerId = currentTeamPlayers[nextMimerIdx % currentTeamPlayers.length]?.id || null;
         
         // Pick a random player from another team
-        const otherPlayers = players.filter(p => p.team_id !== session.active_team);
+        const otherPlayers = playersRef.current.filter(p => p.team_id !== session.active_team);
         const randomValidator = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
 
         await supabase.from('mimica_game_state').update({
@@ -192,10 +196,10 @@ export default function MimicaDashboard() {
   }, [session, prepTimeLeft]);
 
   const startPlayingTeam = async (teamId: number) => {
-     const currentTeamPlayers = players.filter(p => p.team_id === teamId);
+     const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
      const mimer = currentTeamPlayers[0];
      
-     const otherPlayers = players.filter(p => p.team_id !== teamId);
+     const otherPlayers = playersRef.current.filter(p => p.team_id !== teamId);
      const validator = otherPlayers[0]; // fallback to first
 
      // Calculate word index based on round and team
@@ -266,8 +270,9 @@ export default function MimicaDashboard() {
                     </div>
                     <p className="text-white font-bold mb-2"><FaUsers className="inline mr-2" /> Jugadores: {teamPlayers.length}</p>
                     <div className="w-full flex flex-wrap justify-center gap-2 mt-2">
-                       {teamPlayers.map(p => (
+                       {teamPlayers.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((p, index) => (
                           <span key={p.id} className="bg-orange-500/20 text-orange-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-1 max-w-full shadow-sm">
+                             <span className="font-black text-white mr-1">{index + 1}.</span>
                              <span className="truncate max-w-[100px] font-bold">{p.name}</span>
                              <button onClick={() => removePlayer(p.id)} className="text-red-400 hover:text-red-600 font-black ml-1 text-sm leading-none">&times;</button>
                           </span>

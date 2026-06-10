@@ -7,7 +7,7 @@ import {
 import Confetti from "react-confetti";
 import { 
   FaStar, FaBell, FaCommentDots, 
-  FaGhost, FaSkull, FaHatWizard, FaLeaf, FaTrophy, FaFire
+  FaGhost, FaSkull, FaHatWizard, FaLeaf, FaTrophy, FaFire, FaPaintBrush
 } from "react-icons/fa";
 import { GiTribalMask, GiEvilEyes } from "react-icons/gi";
 import { QRCodeSVG } from "qrcode.react";
@@ -15,6 +15,7 @@ import { supabase } from "./supabase";
 import AnimatedLogo from "./AnimatedLogo";
 import SlotMachine from "./components/SlotMachine";
 import MimicaDashboard from "./components/mimica/MimicaDashboard";
+import DibujoDashboard from "./components/dibujo/DibujoDashboard";
 import { QUESTION_CATEGORIES, Question } from "./data/questions";
 import "./App.css";
 
@@ -340,6 +341,7 @@ function App() {
           <nav className="space-y-1">
             <div onClick={() => setActiveTab('PREGUNTAS')}><SidebarItem icon={<HelpCircle size={18} />} label="PREGUNTAS" active={activeTab === 'PREGUNTAS'} /></div>
             <div onClick={() => setActiveTab('MIMICA')}><SidebarItem icon={<GiTribalMask size={18} />} label="MIMICA" active={activeTab === 'MIMICA'} /></div>
+            <div onClick={() => setActiveTab('DIBUJO')}><SidebarItem icon={<FaPaintBrush size={18} />} label="DIBUJO" active={activeTab === 'DIBUJO'} /></div>
             <SidebarItem icon={<div className="w-1 h-4 bg-orange-500 rounded mr-1"></div>} label="LIVE DEALERS" />
             <div onClick={() => setActiveTab('ROULETTE')}><SidebarItem icon={<CircleDashed size={18} />} label="ROULETTE" active={activeTab === 'ROULETTE'} /></div>
             <SidebarItem icon={<Star size={18} />} label="MINES" />
@@ -394,7 +396,7 @@ function App() {
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar relative z-10 flex flex-col">
           
           {/* MAIN GAME VIEW (Toggles based on Active Tab) */}
-          {activeTab === 'PREGUNTAS' || activeTab === 'MIMICA' ? (
+          {activeTab === 'PREGUNTAS' || activeTab === 'MIMICA' || activeTab === 'DIBUJO' ? (
           <div className="relative w-full h-full max-w-[95%] mx-auto rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center p-2">
              <div className="absolute inset-0 bg-[#25312a] z-0 rounded-xl overflow-hidden">
                 <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-[#111915] to-transparent"></div>
@@ -407,7 +409,7 @@ function App() {
                    {/* Top Arch */}
                    <div className="w-[105%] h-24 bg-[#c88d51] border-b-8 border-[#9e6730] rounded-t-lg z-20 flex items-center justify-center relative shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                       <div className="bg-[#9e3a24] px-10 py-3 rounded-full border-4 border-[#ffb347] shadow-[0_5px_15px_rgba(0,0,0,0.5)] flex items-center justify-center transform -translate-y-4">
-                         <span className="text-4xl font-black text-[#ffedcc] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] uppercase tracking-tighter" style={{ WebkitTextStroke: '1px #4a1c11' }}>VOODOO <br/> {activeTab === 'MIMICA' ? 'MIMICA' : 'TRIVIA'}</span>
+                         <span className="text-4xl font-black text-[#ffedcc] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] uppercase tracking-tighter" style={{ WebkitTextStroke: '1px #4a1c11' }}>VOODOO <br/> {activeTab === 'MIMICA' ? 'MIMICA' : activeTab === 'DIBUJO' ? 'DIBUJO' : 'TRIVIA'}</span>
                       </div>
                       <FaLeaf className="absolute top-2 left-1/2 text-green-500 text-3xl transform -translate-x-1/2 -translate-y-8 drop-shadow-md" />
                    </div>
@@ -433,7 +435,7 @@ function App() {
                       
                       {/* Screen Board */}
                       <div className="flex-1 bg-[#1a1130] border-8 border-[#eab308] shadow-[inset_0_0_50px_rgba(0,0,0,0.9)] relative z-10 overflow-y-auto custom-scrollbar flex flex-col">
-                         {activeTab === 'PREGUNTAS' ? renderPreguntasContent() : <MimicaDashboard />}
+                         {activeTab === 'PREGUNTAS' ? renderPreguntasContent() : activeTab === 'MIMICA' ? <MimicaDashboard /> : <DibujoDashboard />}
                       </div>
 
                       {/* Right Pillar (Tiki) */}
