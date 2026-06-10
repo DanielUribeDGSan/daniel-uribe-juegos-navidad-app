@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../supabase";
 import { FaPlay, FaTrophy, FaStopwatch, FaUsers, FaArrowRight } from "react-icons/fa";
