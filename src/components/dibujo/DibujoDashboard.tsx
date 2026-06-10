@@ -156,7 +156,7 @@ export default function DibujoDashboard() {
      if (newWordsCompleted >= 15) {
         await finishTeamTurn(newTime);
      } else {
-        const currentTeamPlayers = playersRef.current.filter(p => p.team_id === session.active_team).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        const currentTeamPlayers = playersRef.current.filter(p => p.team_id === session.active_team).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
         const nextDrawerIdx = currentTeamPlayers.findIndex(p => p.id === currentState.active_drawer_id) + 1;
         const nextDrawerId = currentTeamPlayers[nextDrawerIdx % currentTeamPlayers.length]?.id || null;
         
@@ -221,7 +221,7 @@ export default function DibujoDashboard() {
   }, [session, prepTimeLeft]);
 
   const startPlayingTeam = async (teamId: number) => {
-     const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+     const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
      const drawer = currentTeamPlayers[0];
      
      const startWordIdx = ((session.current_round - 1) * 60) + ((teamId - 1) * 15);
@@ -294,7 +294,7 @@ export default function DibujoDashboard() {
                     </div>
                     <p className="text-white font-bold mb-2"><FaUsers className="inline mr-2" /> Jugadores: {teamPlayers.length}</p>
                     <div className="w-full flex flex-wrap justify-center gap-2 mt-2">
-                       {teamPlayers.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((p, index) => (
+                       {teamPlayers.sort((a,b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()).map((p, index) => (
                           <span key={p.id} className="bg-pink-500/20 text-pink-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-1 max-w-full shadow-sm">
                              <span className="font-black text-white mr-1">{index + 1}.</span>
                              <span className="truncate max-w-[100px] font-bold">{p.name}</span>

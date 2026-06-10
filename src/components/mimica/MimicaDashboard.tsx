@@ -81,7 +81,7 @@ export default function MimicaDashboard() {
         await finishTeamTurn(newTime);
      } else {
         // Select next mimer and next validator
-        const currentTeamPlayers = playersRef.current.filter(p => p.team_id === session.active_team).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        const currentTeamPlayers = playersRef.current.filter(p => p.team_id === session.active_team).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
         const nextMimerIdx = currentTeamPlayers.findIndex(p => p.id === currentState.active_mimer_id) + 1;
         const nextMimerId = currentTeamPlayers[nextMimerIdx % currentTeamPlayers.length]?.id || null;
         
@@ -195,7 +195,7 @@ export default function MimicaDashboard() {
   }, [session, prepTimeLeft]);
 
   const startPlayingTeam = async (teamId: number) => {
-     const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+     const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
      const mimer = currentTeamPlayers[0];
      
      const otherPlayers = playersRef.current.filter(p => p.team_id !== teamId);
@@ -269,7 +269,7 @@ export default function MimicaDashboard() {
                     </div>
                     <p className="text-white font-bold mb-2"><FaUsers className="inline mr-2" /> Jugadores: {teamPlayers.length}</p>
                     <div className="w-full flex flex-wrap justify-center gap-2 mt-2">
-                       {teamPlayers.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((p, index) => (
+                       {teamPlayers.sort((a,b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()).map((p, index) => (
                           <span key={p.id} className="bg-orange-500/20 text-orange-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-1 max-w-full shadow-sm">
                              <span className="font-black text-white mr-1">{index + 1}.</span>
                              <span className="truncate max-w-[100px] font-bold">{p.name}</span>
