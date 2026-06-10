@@ -22,7 +22,6 @@ export default function MimicaDashboard() {
   const [gameState, setGameState] = useState<any>(null);
   const [words, setWords] = useState<string[]>([]);
   const [prepTimeLeft, setPrepTimeLeft] = useState(60);
-  const [prepTimeLeft, setPrepTimeLeft] = useState(60);
   const [teamTimes, setTeamTimes] = useState<{ [round: number]: { [team: number]: number } }>({});
 
   const playersRef = useRef<any[]>([]);
