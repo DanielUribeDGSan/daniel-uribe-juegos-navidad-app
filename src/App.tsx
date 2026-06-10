@@ -17,7 +17,7 @@ import SlotMachine from "./components/SlotMachine";
 import { QUESTION_CATEGORIES, Question } from "./data/questions";
 import "./App.css";
 
-const LOCAL_IP = "192.168.1.100";
+
 
 type GameState = 'CATEGORIES' | 'QR' | 'PLAYING' | 'FINISHED';
 
@@ -218,7 +218,7 @@ function App() {
              <div className="bg-white p-4 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.2)] border-4 border-orange-500 mb-8 flex flex-col items-center">
                 {sessionId ? (
                    <>
-                     <QRCodeSVG value={`http://${LOCAL_IP}:4321/?session_id=${sessionId}`} size={200} level="H" includeMargin={false} />
+                     <QRCodeSVG value={`https://daniel-uribe-jeugos-navidad-2026.netlify.app/?session_id=${sessionId}`} size={200} level="H" includeMargin={false} />
                      <p className="mt-4 text-xs font-bold text-gray-500 uppercase">O usa este PIN:</p>
                      <p className="text-2xl text-gray-800 font-mono font-black bg-gray-100 px-4 py-2 rounded mt-1 select-all tracking-widest uppercase">{sessionPin}</p>
                    </>
