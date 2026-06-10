@@ -14,6 +14,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "./supabase";
 import AnimatedLogo from "./AnimatedLogo";
 import SlotMachine from "./components/SlotMachine";
+import MimicaDashboard from "./components/mimica/MimicaDashboard";
 import { QUESTION_CATEGORIES, Question } from "./data/questions";
 import "./App.css";
 
@@ -338,6 +339,7 @@ function App() {
 
           <nav className="space-y-1">
             <div onClick={() => setActiveTab('PREGUNTAS')}><SidebarItem icon={<HelpCircle size={18} />} label="PREGUNTAS" active={activeTab === 'PREGUNTAS'} /></div>
+            <div onClick={() => setActiveTab('MIMICA')}><SidebarItem icon={<GiTribalMask size={18} />} label="MIMICA" active={activeTab === 'MIMICA'} /></div>
             <SidebarItem icon={<div className="w-1 h-4 bg-orange-500 rounded mr-1"></div>} label="LIVE DEALERS" />
             <div onClick={() => setActiveTab('ROULETTE')}><SidebarItem icon={<CircleDashed size={18} />} label="ROULETTE" active={activeTab === 'ROULETTE'} /></div>
             <SidebarItem icon={<Star size={18} />} label="MINES" />
@@ -392,32 +394,35 @@ function App() {
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar relative z-10 flex flex-col">
           
           {/* MAIN GAME VIEW (Toggles based on Active Tab) */}
-          {activeTab === 'PREGUNTAS' ? (
-          <div className="relative w-full h-full max-w-6xl mx-auto rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center p-2">
-             <div className="absolute inset-0 bg-[#25312a] z-0">
+          {activeTab === 'PREGUNTAS' || activeTab === 'MIMICA' ? (
+          <div className="relative w-full h-full max-w-[95%] mx-auto rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center p-2">
+             <div className="absolute inset-0 bg-[#25312a] z-0 rounded-xl overflow-hidden">
                 <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-[#111915] to-transparent"></div>
              </div>
 
-             <div className="relative w-full h-full flex flex-col items-center justify-center py-4 z-10">
+             <div className="relative w-full h-full flex flex-col items-center justify-center py-4 z-10 min-h-0">
                 {/* Frame - Stone/Wood Structure */}
-                <div className="relative w-full h-full max-w-4xl flex flex-col items-center">
+                <div className="relative w-full h-full max-w-[95%] flex flex-col items-center">
                    
                    {/* Top Arch */}
                    <div className="w-[105%] h-24 bg-[#c88d51] border-b-8 border-[#9e6730] rounded-t-lg z-20 flex items-center justify-center relative shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                       <div className="bg-[#9e3a24] px-10 py-3 rounded-full border-4 border-[#ffb347] shadow-[0_5px_15px_rgba(0,0,0,0.5)] flex items-center justify-center transform -translate-y-4">
-                         <span className="text-4xl font-black text-[#ffedcc] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] uppercase tracking-tighter" style={{ WebkitTextStroke: '1px #4a1c11' }}>VOODOO <br/> TRIVIA</span>
+                         <span className="text-4xl font-black text-[#ffedcc] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] uppercase tracking-tighter" style={{ WebkitTextStroke: '1px #4a1c11' }}>VOODOO <br/> {activeTab === 'MIMICA' ? 'MIMICA' : 'TRIVIA'}</span>
                       </div>
                       <FaLeaf className="absolute top-2 left-1/2 text-green-500 text-3xl transform -translate-x-1/2 -translate-y-8 drop-shadow-md" />
                    </div>
 
                    {/* Pillars & Board */}
-                   <div className="relative w-full flex-1 flex items-stretch px-4">
+                   <div className="relative w-full flex-1 flex items-stretch px-4 min-h-0">
                       {/* Left Pillar (Tiki) */}
                       <div className="w-24 h-full relative z-20 -mr-4 flex flex-col justify-between">
-                         <div className="flex-1 bg-[#47858c] border-x-4 border-[#2c585e] shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center py-4">
-                            <GiTribalMask className="text-[#f97316] text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] mb-2" />
-                            <div className="w-16 h-4 bg-[#2c585e] my-2"></div>
-                            <GiTribalMask className="text-[#eab308] text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" />
+                         <div className="flex-1 bg-[#47858c] border-x-4 border-[#2c585e] shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center py-4 gap-2 overflow-hidden">
+                            {[...Array(15)].map((_, i) => (
+                               <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                                  <GiTribalMask className={`${["text-[#f97316]", "text-[#eab308]", "text-[#ef4444]", "text-[#3b82f6]"][i % 4]} text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]`} />
+                                  <div className="w-16 h-2 bg-[#2c585e]"></div>
+                               </div>
+                            ))}
                          </div>
                          {/* Torch */}
                          <div className="absolute -left-6 bottom-10 w-12 h-32 flex flex-col items-center">
@@ -428,15 +433,18 @@ function App() {
                       
                       {/* Screen Board */}
                       <div className="flex-1 bg-[#1a1130] border-8 border-[#eab308] shadow-[inset_0_0_50px_rgba(0,0,0,0.9)] relative z-10 overflow-y-auto custom-scrollbar flex flex-col">
-                         {renderPreguntasContent()}
+                         {activeTab === 'PREGUNTAS' ? renderPreguntasContent() : <MimicaDashboard />}
                       </div>
 
                       {/* Right Pillar (Tiki) */}
                       <div className="w-24 h-full relative z-20 -ml-4 flex flex-col justify-between">
-                         <div className="flex-1 bg-[#47858c] border-x-4 border-[#2c585e] shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center py-4">
-                            <GiTribalMask className="text-[#f97316] text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] mb-2" />
-                            <div className="w-16 h-4 bg-[#2c585e] my-2"></div>
-                            <GiTribalMask className="text-[#eab308] text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" />
+                         <div className="flex-1 bg-[#47858c] border-x-4 border-[#2c585e] shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center py-4 gap-2 overflow-hidden">
+                            {[...Array(15)].map((_, i) => (
+                               <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                                  <GiTribalMask className={`${["text-[#f97316]", "text-[#eab308]", "text-[#ef4444]", "text-[#3b82f6]"][i % 4]} text-6xl drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]`} />
+                                  <div className="w-16 h-2 bg-[#2c585e]"></div>
+                               </div>
+                            ))}
                          </div>
                          {/* Torch */}
                          <div className="absolute -right-6 bottom-10 w-12 h-32 flex flex-col items-center">
