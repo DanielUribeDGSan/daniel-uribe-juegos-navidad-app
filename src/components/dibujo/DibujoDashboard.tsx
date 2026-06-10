@@ -21,6 +21,7 @@ export default function DibujoDashboard() {
   const [gameState, setGameState] = useState<any>(null);
   const [words, setWords] = useState<string[]>([]);
   const [prepTimeLeft, setPrepTimeLeft] = useState(60);
+  const [turnTimeLeft, setTurnTimeLeft] = useState(60);
   const [teamTimes, setTeamTimes] = useState<{ [round: number]: { [team: number]: number } }>({});
   
   const playersRef = useRef<any[]>([]);
@@ -138,14 +139,17 @@ export default function DibujoDashboard() {
       const currentWord = gs.current_word;
       if (currentWord && payload.guess.trim().toLowerCase() === currentWord.toLowerCase()) {
          // Correct guess!
+         setTurnTimeLeft(60);
          await advanceWord(gs);
       }
   };
 
-  const advanceWord = async (currentState: any) => {
+  const advanceWord = async (currentState: any, timeOverride?: number) => {
      const nextWordIdx = currentState.current_word_index + 1;
      const newWordsCompleted = currentState.words_completed + 1;
-     let newTime = currentState.time_elapsed_seconds;
+     let newTime = timeOverride ?? currentState.time_elapsed_seconds;
+     
+     setTurnTimeLeft(60);
 
      // Clear canvas locally and tell clients to clear
      const ctx = canvasRef.current?.getContext('2d');
@@ -164,7 +168,8 @@ export default function DibujoDashboard() {
            current_word_index: nextWordIdx,
            words_completed: newWordsCompleted,
            active_drawer_id: nextDrawerId,
-           current_word: words[nextWordIdx]
+           current_word: words[nextWordIdx],
+           time_elapsed_seconds: newTime
         }).eq('id', currentState.id);
      }
   };
@@ -204,13 +209,30 @@ export default function DibujoDashboard() {
         }
      } else if (session?.status === 'playing') {
         timerId = setInterval(() => {
-           setGameState((prev: any) => {
-              if(!prev) return prev;
-              const newTime = prev.time_elapsed_seconds + 1;
-              if (newTime % 5 === 0) {
-                 supabase.from('dibujo_game_state').update({ time_elapsed_seconds: newTime }).eq('id', prev.id).then();
-              }
-              return { ...prev, time_elapsed_seconds: newTime };
+           setTurnTimeLeft(prevTurnTime => {
+               const newTurnTime = prevTurnTime - 1;
+               
+               broadcastChannelRef.current?.send({ type: 'broadcast', event: 'turn_time', payload: { time: Math.max(0, newTurnTime) } });
+
+               if (newTurnTime <= 0) {
+                   setGameState((prevGs: any) => {
+                       if (!prevGs) return prevGs;
+                       const penalizedTime = prevGs.time_elapsed_seconds + 30;
+                       advanceWord(prevGs, penalizedTime);
+                       return { ...prevGs, time_elapsed_seconds: penalizedTime };
+                   });
+                   return 60;
+               } else {
+                   setGameState((prevGs: any) => {
+                      if(!prevGs) return prevGs;
+                      const newTime = prevGs.time_elapsed_seconds + 1;
+                      if (newTime % 5 === 0) {
+                         supabase.from('dibujo_game_state').update({ time_elapsed_seconds: newTime }).eq('id', prevGs.id).then();
+                      }
+                      return { ...prevGs, time_elapsed_seconds: newTime };
+                   });
+                   return newTurnTime;
+               }
            });
         }, 1000);
      }
@@ -225,6 +247,8 @@ export default function DibujoDashboard() {
      const drawer = currentTeamPlayers[0];
      
      const startWordIdx = ((session.current_round - 1) * 60) + ((teamId - 1) * 15);
+
+     setTurnTimeLeft(60);
 
      await supabase.from('dibujo_game_state').update({
         current_word_index: startWordIdx,
@@ -330,13 +354,21 @@ export default function DibujoDashboard() {
        <div className={`flex-1 w-full max-w-5xl flex flex-col ${session?.status === 'playing' ? 'block' : 'hidden'}`}>
           {gameState && (
              <>
-                <div className="flex justify-between items-center mb-6">
-                   <h2 className="text-4xl font-black text-white uppercase">Ronda {session.current_round}</h2>
-                   <h3 className="text-3xl text-pink-500 font-bold uppercase">Equipo {session.active_team} Dibujando</h3>
-                   <div className="bg-white/10 px-6 py-2 rounded-xl text-3xl font-black text-white flex items-center gap-4 border border-white/20">
-                      <FaStopwatch className="text-pink-500" /> {Math.floor(gameState.time_elapsed_seconds / 60)}:{(gameState.time_elapsed_seconds % 60).toString().padStart(2, '0')}
-                   </div>
-                </div>
+                 <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-col">
+                       <h2 className="text-4xl font-black text-white uppercase">Ronda {session.current_round}</h2>
+                       <h3 className="text-xl text-pink-500 font-bold uppercase mt-1">Equipo {session.active_team} Jugando</h3>
+                    </div>
+
+                    <div className={`text-6xl font-black flex items-center gap-4 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] ${turnTimeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-pink-400'}`}>
+                       <FaStopwatch /> {turnTimeLeft.toString().padStart(2, '0')}s
+                    </div>
+
+                    <div className="bg-white/10 px-6 py-2 rounded-xl text-2xl font-black text-white flex flex-col items-end border border-white/20">
+                       <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Tiempo Total</span>
+                       <span>{Math.floor(gameState.time_elapsed_seconds / 60)}:{(gameState.time_elapsed_seconds % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                 </div>
 
                 <div className="flex justify-between items-center bg-pink-500/20 border-2 border-pink-500 rounded-2xl p-4 mb-4">
                    <p className="text-xl font-bold text-pink-300 uppercase">Dibujando:</p>

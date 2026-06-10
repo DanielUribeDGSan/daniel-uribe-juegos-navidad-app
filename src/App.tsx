@@ -7,7 +7,7 @@ import {
 import Confetti from "react-confetti";
 import { 
   FaStar, FaBell, FaCommentDots, 
-  FaGhost, FaSkull, FaHatWizard, FaLeaf, FaTrophy, FaFire, FaPaintBrush
+  FaGhost, FaSkull, FaHatWizard, FaLeaf, FaTrophy, FaFire, FaPaintBrush, FaTrash
 } from "react-icons/fa";
 import { GiTribalMask, GiEvilEyes } from "react-icons/gi";
 import { QRCodeSVG } from "qrcode.react";
@@ -35,6 +35,49 @@ function App() {
   const [players, setPlayers] = useState<any[]>([]);
   const [answers, setAnswers] = useState<any[]>([]);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [celebration, setCelebration] = useState(false);
+  const [isResettingDB, setIsResettingDB] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
+
+  const showToast = (msg: string) => {
+      setToastMessage(msg);
+      setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const executeHardReset = async () => {
+        setShowConfirmReset(false);
+        setIsResettingDB(true);
+        try {
+           const del = async (table: string) => await supabase.from(table).delete().not('id', 'is', null);
+
+           await del('game_answers');
+           await del('game_players');
+           await del('game_sessions');
+           
+           await del('mimica_game_state');
+           await del('mimica_players');
+           await del('mimica_sessions');
+
+           await del('dibujo_game_state');
+           await del('dibujo_players');
+           await del('dibujo_sessions');
+           
+           showToast('¡Base de datos limpiada exitosamente!');
+           setTimeout(() => {
+               window.location.reload();
+           }, 2000);
+        } catch (e) {
+           console.error(e);
+           alert('Error al limpiar la base de datos.');
+        } finally {
+           // We keep the loader running until reload, but just in case it fails:
+           if (toastMessage !== '¡Base de datos limpiada exitosamente!') {
+              setIsResettingDB(false);
+           }
+        }
+  };
+
   const [timeLeft, setTimeLeft] = useState(30);
 
   useEffect(() => {
@@ -370,6 +413,41 @@ function App() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col relative z-10">
+
+        {toastMessage && (
+            <div className="fixed top-24 right-10 z-[100] bg-green-500 text-white px-6 py-3 rounded-xl font-bold shadow-2xl animate-fade-in-up border-2 border-white/20">
+                {toastMessage}
+            </div>
+        )}
+
+        {isResettingDB && (
+            <div className="fixed inset-0 bg-black/90 z-[200] flex flex-col items-center justify-center backdrop-blur-sm">
+               <div className="w-24 h-24 border-8 border-pink-500 border-t-transparent rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(236,72,153,0.5)]"></div>
+               <h2 className="text-4xl font-black text-white animate-pulse uppercase tracking-widest text-center">LIMPIANDO BASE DE DATOS...</h2>
+               <p className="text-pink-400 font-bold mt-4">Eliminando sesiones, jugadores y estados</p>
+            </div>
+        )}
+
+        {showConfirmReset && (
+            <div className="fixed inset-0 bg-black/80 z-[150] flex items-center justify-center backdrop-blur-sm p-4">
+               <div className="bg-[#1a1b26] border-2 border-red-500/50 rounded-2xl p-8 max-w-lg w-full text-center shadow-[0_0_50px_rgba(239,68,68,0.3)] animate-fade-in-up">
+                  <FaTrash className="text-red-500 text-6xl mx-auto mb-6" />
+                  <h2 className="text-3xl font-black text-white mb-4 uppercase">¿Borrar todo?</h2>
+                  <p className="text-gray-300 text-lg mb-8 font-bold">
+                     Estás a punto de borrar ABSOLUTAMENTE TODOS los datos de todos los juegos. Esto reiniciará las puntuaciones y expulsará a todos los jugadores. <br/><br/>
+                     <span className="text-red-400">Esta acción no se puede deshacer.</span>
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                     <button onClick={() => setShowConfirmReset(false)} className="bg-gray-600 hover:bg-gray-500 text-white font-bold px-8 py-3 rounded-xl transition-colors">
+                        Cancelar
+                     </button>
+                     <button onClick={executeHardReset} className="bg-red-600 hover:bg-red-500 text-white font-black px-8 py-3 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.5)] transition-colors uppercase">
+                        Sí, Borrar Todo
+                     </button>
+                  </div>
+               </div>
+            </div>
+        )}
         
         {/* TOP BAR */}
         <header className="h-16 flex items-center justify-between px-6 bg-[#111219] shadow-md z-30 border-b border-white/5">
@@ -381,7 +459,10 @@ function App() {
              </div>
           </div>
           <div className="flex-1 flex justify-end items-center gap-4">
-             <div className="flex items-center gap-3 ml-4 bg-[#191a24] p-1.5 pr-4 rounded-full border border-white/5 cursor-pointer">
+             <button onClick={() => setShowConfirmReset(true)} className="bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500 hover:text-white px-4 py-1.5 rounded-full text-xs font-black uppercase flex items-center gap-2 transition-colors mr-2">
+                <FaTrash /> Limpiar BD
+             </button>
+             <div className="flex items-center gap-3 bg-[#191a24] p-1.5 pr-4 rounded-full border border-white/5 cursor-pointer">
                 <div className="flex flex-col items-end">
                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">NEOMODEON</span>
                 </div>
