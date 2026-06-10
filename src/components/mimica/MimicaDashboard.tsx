@@ -248,7 +248,11 @@ export default function MimicaDashboard() {
      setSession({ ...session, status: 'waiting', current_round: 1, active_team: null });
   };
 
-  if (!sessionId) return <div className="text-white">Iniciando Servidor...</div>;
+  if (!sessionId) return (
+    <div className="flex w-full h-full items-center justify-center">
+      <div className="w-16 h-16 border-8 border-orange-500 border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(249,115,22,0.5)]"></div>
+    </div>
+  );
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center relative min-h-max">
