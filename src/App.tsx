@@ -16,6 +16,7 @@ import AnimatedLogo from "./AnimatedLogo";
 import SlotMachine from "./components/SlotMachine";
 import MimicaDashboard from "./components/mimica/MimicaDashboard";
 import DibujoDashboard from "./components/dibujo/DibujoDashboard";
+import BackgroundMusic from "./components/BackgroundMusic";
 import { QUESTION_CATEGORIES, Question } from "./data/questions";
 import "./App.css";
 
@@ -93,10 +94,22 @@ function App() {
 
   useEffect(() => {
     if (gameState === 'FINISHED') {
-       const audio = new Audio('/assets/ganador.mp3');
-       audio.play().catch(e => console.log('Audio error:', e));
+       const audioEl = document.getElementById('ganador-audio') as HTMLAudioElement;
+       if (audioEl) {
+          audioEl.currentTime = 0;
+          audioEl.play().catch(e => console.log('Audio error:', e));
+       }
     }
   }, [gameState]);
+
+  useEffect(() => {
+    if (gameState === 'PLAYING' && players.length > 0) {
+      const currentAnswers = answers.filter(a => a.question_index === currentQuestionIdx);
+      if (currentAnswers.length >= players.length && timeLeft > 0) {
+         setTimeLeft(0);
+      }
+    }
+  }, [answers, players.length, currentQuestionIdx, gameState, timeLeft]);
 
   useEffect(() => {
     let timer: any;
@@ -373,6 +386,9 @@ function App() {
         <div className="absolute top-0 left-20 w-4 h-64 bg-green-900/20 rounded-full blur-sm"></div>
         <div className="absolute top-0 right-32 w-6 h-80 bg-green-900/20 rounded-full blur-sm"></div>
       </div>
+      
+      <audio id="ganador-audio" src="/assets/ganador.mp3" preload="auto" />
+      {activeTab === 'PREGUNTAS' && <BackgroundMusic isPlaying={gameState === 'PLAYING'} />}
 
       {/* LEFT SIDEBAR */}
       <aside className="w-64 bg-[#191a24] flex flex-col justify-between border-r border-white/5 z-20 shadow-2xl overflow-y-auto custom-scrollbar">

@@ -4,6 +4,7 @@ import { supabase } from "../../supabase";
 import { FaPlay, FaTrophy, FaStopwatch, FaUsers, FaArrowRight } from "react-icons/fa";
 import Confetti from "react-confetti";
 import { MIMICA_WORDS } from "../../data/mimica_words";
+import BackgroundMusic from "../BackgroundMusic";
 
 // Shuffle words once per game
 const shuffleArray = (array: any[]) => {
@@ -21,7 +22,7 @@ export default function MimicaDashboard() {
   const [players, setPlayers] = useState<any[]>([]);
   const [gameState, setGameState] = useState<any>(null);
   const [words, setWords] = useState<string[]>([]);
-  const [prepTimeLeft, setPrepTimeLeft] = useState(60);
+  const [prepTimeLeft, setPrepTimeLeft] = useState(30);
   const [teamTimes, setTeamTimes] = useState<{ [round: number]: { [team: number]: number } }>({});
 
   const playersRef = useRef<any[]>([]);
@@ -158,7 +159,20 @@ export default function MimicaDashboard() {
   };
 
   const startPrepTimer = async (teamId: number) => {
-     setPrepTimeLeft(60);
+     // Check if team has players, if not, skip to next team
+     const hasPlayers = playersRef.current.some(p => p.team_id === teamId);
+     if (!hasPlayers) {
+        const nextTeam = teamId + 1;
+        if (nextTeam > 4) {
+           await supabase.from('mimica_sessions').update({ status: 'round_end' }).eq('id', sessionId);
+           setSession({ ...session, status: 'round_end' });
+        } else {
+           startPrepTimer(nextTeam);
+        }
+        return;
+     }
+
+     setPrepTimeLeft(30);
      await supabase.from('mimica_sessions').update({ status: 'prep', active_team: teamId }).eq('id', sessionId);
      setSession({ ...session, status: 'prep', active_team: teamId });
   };
@@ -196,7 +210,10 @@ export default function MimicaDashboard() {
 
   const startPlayingTeam = async (teamId: number) => {
      const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
-     const mimer = currentTeamPlayers[0];
+     
+     // Pick a random mimer to start
+     const randomStartIndex = Math.floor(Math.random() * currentTeamPlayers.length);
+     const mimer = currentTeamPlayers[randomStartIndex];
      
      const otherPlayers = playersRef.current.filter(p => p.team_id !== teamId);
      const validator = otherPlayers[0]; // fallback to first
@@ -247,6 +264,16 @@ export default function MimicaDashboard() {
      
      setSession({ ...session, status: 'waiting', current_round: 1, active_team: null });
   };
+
+  useEffect(() => {
+     if (session?.status === 'finished') {
+        const audio = document.getElementById('ganador-audio') as HTMLAudioElement;
+        if (audio) {
+           audio.currentTime = 0;
+           audio.play().catch(e => console.log('Audio play error:', e));
+        }
+     }
+  }, [session?.status]);
 
   if (!sessionId) return (
     <div className="flex w-full h-full items-center justify-center">
@@ -409,6 +436,7 @@ export default function MimicaDashboard() {
              </button>
           </div>
        )}
+       <BackgroundMusic isPlaying={session?.status === 'playing'} />
     </div>
   );
 }

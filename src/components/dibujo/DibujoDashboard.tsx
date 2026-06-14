@@ -4,6 +4,7 @@ import { supabase } from "../../supabase";
 import { FaPlay, FaTrophy, FaStopwatch, FaUsers, FaArrowRight, FaPaintBrush } from "react-icons/fa";
 import Confetti from "react-confetti";
 import { DIBUJO_WORDS } from "../../data/dibujo_words";
+import BackgroundMusic from "../BackgroundMusic";
 
 const shuffleArray = (array: any[]) => {
   const newArr = [...array];
@@ -20,7 +21,7 @@ export default function DibujoDashboard() {
   const [players, setPlayers] = useState<any[]>([]);
   const [gameState, setGameState] = useState<any>(null);
   const [words, setWords] = useState<string[]>([]);
-  const [prepTimeLeft, setPrepTimeLeft] = useState(60);
+  const [prepTimeLeft, setPrepTimeLeft] = useState(30);
   const [turnTimeLeft, setTurnTimeLeft] = useState(60);
   const [teamTimes, setTeamTimes] = useState<{ [round: number]: { [team: number]: number } }>({});
   
@@ -194,7 +195,20 @@ export default function DibujoDashboard() {
   };
 
   const startPrepTimer = async (teamId: number) => {
-     setPrepTimeLeft(60);
+     // Check if team has players, if not, skip to next team
+     const hasPlayers = playersRef.current.some(p => p.team_id === teamId);
+     if (!hasPlayers) {
+        const nextTeam = teamId + 1;
+        if (nextTeam > 4) {
+           await supabase.from('dibujo_sessions').update({ status: 'round_end' }).eq('id', sessionId);
+           setSession({ ...session, status: 'round_end' });
+        } else {
+           startPrepTimer(nextTeam);
+        }
+        return;
+     }
+
+     setPrepTimeLeft(30);
      await supabase.from('dibujo_sessions').update({ status: 'prep', active_team: teamId }).eq('id', sessionId);
      setSession({ ...session, status: 'prep', active_team: teamId });
   };
@@ -244,7 +258,10 @@ export default function DibujoDashboard() {
 
   const startPlayingTeam = async (teamId: number) => {
      const currentTeamPlayers = playersRef.current.filter(p => p.team_id === teamId).sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
-     const drawer = currentTeamPlayers[0];
+     
+     // Pick a random drawer to start
+     const randomStartIndex = Math.floor(Math.random() * currentTeamPlayers.length);
+     const drawer = currentTeamPlayers[randomStartIndex];
      
      const startWordIdx = ((session.current_round - 1) * 60) + ((teamId - 1) * 15);
 
@@ -291,6 +308,16 @@ export default function DibujoDashboard() {
      }).eq('id', sessionId);
      setSession({ ...session, status: 'waiting', current_round: 1, active_team: null });
   };
+
+  useEffect(() => {
+     if (session?.status === 'finished') {
+        const audio = document.getElementById('ganador-audio') as HTMLAudioElement;
+        if (audio) {
+           audio.currentTime = 0;
+           audio.play().catch(e => console.log('Audio play error:', e));
+        }
+     }
+  }, [session?.status]);
 
   const removePlayer = async (playerId: string) => {
      await supabase.from('dibujo_players').delete().eq('id', playerId);
@@ -478,6 +505,7 @@ export default function DibujoDashboard() {
              </button>
           </div>
        )}
+       <BackgroundMusic isPlaying={session?.status === 'playing'} />
     </div>
   );
 }
